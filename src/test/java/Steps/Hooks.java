@@ -14,21 +14,24 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import java.io.ByteArrayInputStream;
 import java.util.Collections;
 
-public class Hooks  extends BaseUtility {
+public class Hooks extends BaseUtility {
 
     BaseUtility _utility;
     WebDriver _driver;
-    public Hooks(BaseUtility utility){
-        this._utility=utility;
+
+    public Hooks(BaseUtility utility) {
+        this._utility = utility;
     }
+
     public WebDriver InitDriver() {
-        String _browserName="Chrome";
-        switch(_browserName.toLowerCase()) {
+        String _browserName = "Chrome";
+        switch (_browserName.toLowerCase()) {
             case "chrome":
                 WebDriverManager.chromedriver().setup();
                 ChromeOptions options = new ChromeOptions();
                 options.setUnhandledPromptBehaviour(UnexpectedAlertBehaviour.ACCEPT_AND_NOTIFY);
                 options.addArguments("enable-automation");
+                options.addArguments("--incognito");
                 //options.addArguments("--headless");
                 //options.addArguments("--window-size=1920,1080");
                 options.addArguments("--no-sandbox");
@@ -48,19 +51,20 @@ public class Hooks  extends BaseUtility {
         _driver.manage().window().maximize();
         return _driver;
     }
+
     @Before
-    public void Initialize(){
-        _utility._driver=InitDriver();
+    public void Initialize() {
+        _utility._driver = InitDriver();
 
     }
 
     @After
-    public void TearDown(Scenario scenario){
-        if(scenario.isFailed()){
-            byte[] screenshot=((TakesScreenshot)_utility._driver).getScreenshotAs(OutputType.BYTES);
-            Allure.addAttachment(scenario.getName(),new ByteArrayInputStream(screenshot));
+    public void TearDown(Scenario scenario) {
+        if (scenario.isFailed()) {
+            byte[] screenshot = ((TakesScreenshot) _utility._driver).getScreenshotAs(OutputType.BYTES);
+            Allure.addAttachment(scenario.getName(), new ByteArrayInputStream(screenshot));
         }
-        if(_driver!=null)
+        if (_driver != null)
             _driver.quit();
     }
 }

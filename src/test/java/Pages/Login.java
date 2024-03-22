@@ -11,6 +11,8 @@ import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Wait;
 
+import javax.management.InvalidApplicationException;
+
 import static Utility.Helper.WaitForElement;
 
 
@@ -29,21 +31,60 @@ public class Login {
     public WebElement btnSignIn;
 
     public Login(WebDriver driver) {
-        this.driver=driver;
+        this.driver = driver;
         PageFactory.initElements(driver, this);
 
     }
 
     public void navCreateAccount() {
-        while(driver.findElements(By.xpath("//img[@alt='loading']")).stream().count()>0){}
-        Helper.click(driver,lnkCreateAccount);
+        while (driver.findElements(By.xpath("//img[@alt='loading animation']")).stream().count() > 0) {
+        }
+        Helper.click(driver, lnkCreateAccount);
     }
 
     public Dashboard SignIn(String userId, String passWord) {
-        Helper.EnterText(driver,txtEmail,userId);
-        Helper.EnterText(driver,txtPassword,passWord);
-        Helper.click(driver,btnSignIn);
-        while(driver.findElements(By.xpath("//p[text()='Discover products']")).size()==0){}
+        Helper.EnterText(txtEmail, userId);
+        Helper.EnterText(txtPassword, passWord);
+        Helper.click(driver, btnSignIn);
+
+        Helper.waitForPageLoad(driver);
+        while (!driver.findElements(By.xpath("//img[@alt='loading animation']")).isEmpty()) {}
+        while(driver.findElements(By.xpath("//span[text()=' Log in']")).size()>0){}
+        while (driver.findElements(By.xpath("//img[@alt='Upload Receipt']")).isEmpty()) {}
+        try {
+            Thread.sleep(3500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        if (!Helper.findElements(driver, By.xpath("//button[normalize-space()='Got it']"), 60).isEmpty()) {
+            Helper.click(driver,driver.findElement( By.xpath("//button[normalize-space()='Got it']")));
+        }
+        return new Dashboard(driver);
+    }
+
+    public Dashboard firstSignIn(String userId, String passWord) throws InterruptedException {
+        Helper.EnterText(txtEmail, userId);
+        Helper.EnterText(txtPassword, passWord);
+        Helper.click(driver, btnSignIn);
+        Helper.waitForPageLoad(driver);
+        //new SignUp(driver).CompleteRegistration();
+        while (!driver.findElements(By.xpath("//img[@alt='loading animation']")).isEmpty() ){}
+        while(driver.findElements(By.xpath("//span[text()=' Log in']")).size()>0){}
+
+
+        while (driver.findElements(By.xpath("//p[normalize-space()='Selected by Leap Rewards']")).size()==0) {}
+        Wait<WebDriver> wait =WaitForElement(driver);
+        wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.xpath("//p[normalize-space()='Selected by Leap Rewards']"))));
+        if (!Helper.findElements(driver, By.xpath("//button[normalize-space()='Got it']"), 60).isEmpty()) {
+            Helper.click(driver,driver.findElement( By.xpath("//button[normalize-space()='Got it']")));
+        }
+        Thread.sleep(5000);
+//        try {
+//            Helper.WaitForElementToExistAndVisible(Helper.findElement(driver, By.xpath("//div[@class='inline-block align-bottom']"), 10));
+//        } catch (InvalidApplicationException e) {
+//            throw new RuntimeException(e);
+//        };
+
         return new Dashboard(driver);
     }
 

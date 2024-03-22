@@ -24,11 +24,11 @@ public class ProductList {
 
 
     public ProductList(WebDriver driver) {
-        this.driver=driver;
+        this.driver = driver;
         PageFactory.initElements(driver, this);
     }
 
-    public void AcceptCookies(){
+    public void AcceptCookies() {
         buttonEvidonDecline2.click();
     }
 

@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.management.InvalidApplicationException;
 import javax.xml.parsers.DocumentBuilder;
@@ -32,10 +33,7 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.*;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -53,7 +51,7 @@ public class Helper {
 	}
 	public static Wait<WebDriver> WaitForElement(WebDriver driver){
 		return new FluentWait<WebDriver>(driver)
-				.withTimeout(Duration.ofSeconds(30L))
+				.withTimeout(Duration.ofSeconds(60L))
 				.pollingEvery(Duration.ofSeconds(5L))
 				.ignoring(NoSuchElementException.class);
 	}
@@ -69,6 +67,8 @@ public class Helper {
 			return config.GetProperty("QaUrl").toString();
 		else if (envType.equals("PROD"))
 			return config.GetProperty("ProdUrl").toString();
+		else if (envType.equals("DEV"))
+			return config.GetProperty("DevUrl").toString();
 		else
 			return  null;
 	}
@@ -182,12 +182,23 @@ public class Helper {
 		}
 	}
 
-	public static void clickItem(WebDriver driver, WebElement element) throws InterruptedException, InvalidApplicationException {
+	public static void clickItem(WebDriver driver, WebElement element) throws  InvalidApplicationException {
+		Wait<WebDriver> wait =WaitForElement(driver);
+		try {
+			wait.until(ExpectedConditions.elementToBeClickable(element));
+			Actions action = new Actions(driver);
+			action.moveToElement(element).click().perform();
+		} catch (StaleElementReferenceException ex) {
+			scrollAndClick(driver, element);
+		}
+	}
+
+	public static void doubleClick(WebDriver driver, WebElement element)  {
 		Wait<WebDriver> wait =WaitForElement(driver);
 		try {
 			wait.until(ExpectedConditions.visibilityOf(element));
 			Actions action = new Actions(driver);
-			action.moveToElement(element).click().perform();
+			action.doubleClick(element).perform();
 		} catch (StaleElementReferenceException ex) {
 			scrollAndClick(driver, element);
 		}
@@ -210,6 +221,11 @@ public class Helper {
 		return result;
 	}
 
+	public void HandleBadge(WebDriver driver){
+		if(driver.findElements(By.xpath("//div[@class='flex justify-center items-center h-screen']")).size()>0){
+			driver.findElement(By.xpath("//button[text()='OK']")).click();
+		}
+	}
 	public static void EnterText(WebDriver driver, WebElement element, String value) {
 		if(!value.isEmpty()){
 			Wait<WebDriver> wait =WaitForElement(driver);
@@ -220,6 +236,17 @@ public class Helper {
 				element.sendKeys(value);
 			} catch (ElementClickInterceptedException ex) {
 				click(driver, element);
+				element.sendKeys(value);
+			}
+		}
+	}
+
+	public static void EnterText(WebElement element, String value) {
+		if(!value.isEmpty()){
+			try {
+				element.clear();
+				element.sendKeys(value);
+			} catch (ElementClickInterceptedException ex) {
 				element.sendKeys(value);
 			}
 		}
@@ -261,11 +288,15 @@ public class Helper {
 		driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(30));
 	}
 
-	public static void WaitForElementToExistAndVisible(WebElement element) throws InterruptedException, InvalidApplicationException {
+	public static void WaitForElementToExistAndVisible(WebElement element) throws InvalidApplicationException {
 		int ct = 0;
 		do {
 			++ct;
-			Thread.sleep(1000);
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		} while (!element.isDisplayed() && ct < 200);
 		if (element.isDisplayed() && !element.isEnabled()) {
 			throw new InvalidApplicationException(element + " must be visible and Enable");
@@ -286,6 +317,18 @@ public class Helper {
 		if (timeOutInSec <= 0) return _driver.findElement(by);
 		Wait<WebDriver> wait =WaitForElement(_driver);
 		return wait.until(drv -> drv.findElement(by));
+	}
+
+	public static void waitForPageLoad(WebDriver _driver) {
+
+		Wait<WebDriver> wait = new WebDriverWait(_driver, Duration.ofSeconds(10));
+		wait.until(new Function<WebDriver, Boolean>() {
+			public Boolean apply(WebDriver driver) {
+				return String
+						.valueOf(((JavascriptExecutor) driver).executeScript("return document.readyState"))
+						.equals("complete");
+			}
+		});
 	}
 
 	public static List<WebElement> findElements(WebDriver _driver, By by, int timeOutInSec) {

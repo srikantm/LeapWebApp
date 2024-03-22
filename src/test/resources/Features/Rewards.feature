@@ -1,6 +1,6 @@
 Feature: Rewards
 
-  @smoke
+@m1
   Scenario: Verify Donate a Meal functionality
     Given LeapReward url is up and running
     When try to donate a meal in Do Good Rewards section

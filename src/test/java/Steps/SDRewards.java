@@ -5,6 +5,7 @@ import Pages.Dashboard;
 import Pages.Home;
 import Pages.Login;
 import Utility.ConfigFile;
+import Utility.CredentialFile;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.openqa.selenium.WebDriver;
@@ -15,20 +16,30 @@ public class SDRewards {
     private final WebDriver _driver;
     private Login login;
     private Dashboard dashboard;
+
+    private CredentialFile Credential;
+
     ConfigFile config;
+
     public SDRewards(BaseUtility base) {
 
-        this._driver=base._driver;
-        config= new ConfigFile();
+        this._driver = base._driver;
+        //config = new ConfigFile();
+        Credential = new CredentialFile();
+
     }
-    private Dashboard NavigateToDashBoard(WebDriver driver){
-        Home homePage=new Home(driver);
-        login=homePage.NavigateToLogin();
-        return login.SignIn(config.GetProperty("id"),config.GetProperty("passWord") );
+
+    private Dashboard NavigateToDashBoard(WebDriver driver) {
+        Home homePage = new Home(driver);
+        login = homePage.NavigateToLogin();
+        //return login.SignIn(config.GetProperty("id"), config.GetProperty("passWord"));
+        return login.SignIn(Credential.GetProperty("newuserId"), Credential.GetProperty("passWord"));
+
     }
 
     @When("try to donate a meal in Do Good Rewards section")
     public void tryToDonateAMealInDoGoodRewardsSection() {
+
         dashboard = NavigateToDashBoard(_driver);
     }
 
